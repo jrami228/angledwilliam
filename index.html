@@ -1,0 +1,2571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angled Monitoring Well Installation Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --bg-deep: #e7e0d2;
+      --paper: #fbf8f1;
+      --ink: #1c1914;
+      --muted: #5c564c;
+      --line: #c9c0b0;
+      --brown: #6b4a2e;
+      --brown-dark: #4a301c;
+      --soil: #c4a574;
+      --soil-dark: #8b6914;
+      --water: #2a6f97;
+      --water-soft: #7eb8d4;
+      --water-fill: rgba(42, 111, 151, 0.22);
+      --vertical: #2f4f3e;
+      --angled: #b45309;
+      --accent: #8a3b12;
+      --ok: #2d6a4f;
+      --warn: #9a3412;
+      --shadow: 0 10px 30px rgba(28, 25, 20, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #fffaf0 0%, transparent 50%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      color: var(--ink);
+      font-family: "Source Sans 3", system-ui, sans-serif;
+    }
+
+    .app {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 18px 18px 28px;
+      display: grid;
+      grid-template-columns: 320px 1fr 300px;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+      min-height: 100vh;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      min-width: 320px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .header-actions .btn {
+      flex: 0 0 auto;
+      padding: 7px 14px;
+      font-size: 0.78rem;
+      border-radius: 8px;
+    }
+
+    .mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #7a4a24, #3d2414);
+      color: #f8ecd8;
+      display: grid;
+      place-items: center;
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      box-shadow: var(--shadow);
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 3px;
+      max-width: 52ch;
+    }
+
+    .panel {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel h3 {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      color: var(--brown);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel h3 .toggle-hint {
+      font-size: 0.68rem;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: none;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 5px;
+    }
+
+    .hint {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .field { margin-bottom: 2px; }
+
+    input[type="number"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.92rem;
+      color: var(--ink);
+    }
+
+    input[type="number"]:focus, select:focus {
+      outline: 2px solid rgba(138, 59, 18, 0.28);
+      border-color: var(--brown);
+    }
+
+    input[type="checkbox"] {
+      accent-color: var(--brown);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .seg {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg-deep);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .seg button {
+      border: 0;
+      background: transparent;
+      padding: 7px 8px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .seg button.active {
+      background: #fff;
+      color: var(--ink);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    /* Compact seg: content-sized rather than full-width */
+    .seg--compact {
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      width: fit-content;
+    }
+    .seg--compact button { padding: 6px 14px; }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 0.75rem;
+      font-family: "IBM Plex Mono", monospace;
+      cursor: pointer;
+    }
+
+    .chip:hover, .chip.active {
+      border-color: var(--brown);
+      color: var(--brown-dark);
+      background: #f6ead8;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      background: var(--bg-deep);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .toggle-row label {
+      margin-bottom: 0;
+      cursor: pointer;
+      flex: 1;
+      font-size: 0.82rem;
+    }
+
+    .subfields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-left: 6px;
+      border-left: 2px solid var(--line);
+      margin-left: 4px;
+    }
+
+    .subfields[data-disabled="true"] {
+      opacity: 0.42;
+      pointer-events: none;
+    }
+
+    /* Grouping boxes for the two wells. Colors mirror the well lines in the
+       drawing so the input group and the drawing element read as one thing. */
+    .well-box {
+      border-radius: 12px;
+      padding: 12px 12px 12px;
+      border: 1px solid;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .well-box__label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: -2px;
+    }
+
+    .well-box__label::before {
+      content: "";
+      display: inline-block;
+      width: 16px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .well-box--vertical {
+      background: #eaefe5;
+      border-color: #c1cdb9;
+    }
+    .well-box--vertical .well-box__label { color: #3a5843; }
+    .well-box--vertical .well-box__label::before { background: #2f4f3e; }
+    .well-box--vertical .toggle-row { background: #dbe3d5; }
+    .well-box--vertical .subfields { border-left-color: #b7c4ae; }
+
+    .well-box--angled {
+      background: #f5ebd6;
+      border-color: #d8c193;
+    }
+    .well-box--angled .well-box__label { color: #8a3b12; }
+    .well-box--angled .well-box__label::before { background: #b45309; }
+    .well-box--angled .toggle-row { background: #ecdcb7; }
+    .well-box--angled .subfields { border-left-color: #ccb385; }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    /* Compact expandable glossary at the bottom of the input panel */
+    .abbrev-note {
+      background: #f6f1e7;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .abbrev-note summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--brown-dark);
+      list-style: none;
+      user-select: none;
+    }
+    .abbrev-note summary::-webkit-details-marker { display: none; }
+    .abbrev-note summary::before {
+      content: "▸";
+      display: inline-block;
+      margin-right: 6px;
+      transition: transform 0.15s;
+      color: var(--brown);
+    }
+    .abbrev-note[open] summary::before { transform: rotate(90deg); }
+    .abbrev-note dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 4px 12px;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+    .abbrev-note dt {
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 600;
+      color: var(--brown-dark);
+      font-size: 0.75rem;
+    }
+    .abbrev-note dd { margin: 0; }
+
+    .btn {
+      flex: 1;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: "Source Sans 3", sans-serif;
+    }
+
+    .btn:hover { background: #f6ead8; border-color: var(--brown); color: var(--brown-dark); }
+    .btn:active { background: #eddcbc; }
+    .btn.primary { background: var(--brown); border-color: var(--brown-dark); color: #f8ecd8; }
+    .btn.primary:hover { background: var(--brown-dark); }
+    .btn.ghost { background: transparent; }
+
+    .btn.copied {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #fff;
+    }
+
+    .viz-wrap {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      min-height: 640px;
+    }
+
+    /* Results panel on the right, styled to echo the PDF Key Measurements
+       panel: dark brown header bar, cream body, small-caps rows. */
+    .results-panel {
+      background: #fbf8f1;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .results-panel__header {
+      background: linear-gradient(135deg, #6b4a2e, #4a301c);
+      color: #f8ecd8;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 12px 14px;
+      text-align: center;
+    }
+
+    .results-panel__body {
+      display: flex;
+      flex-direction: column;
+      padding: 4px 0;
+      flex: 1 1 auto;
+      overflow-y: auto;
+    }
+
+    .rrow {
+      padding: 9px 14px;
+      border-top: 1px solid rgba(201, 192, 176, 0.4);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .rrow:first-child { border-top: 0; }
+
+    .rrow__k {
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .rrow__v {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1.02rem;
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.25;
+    }
+    .rrow__sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-style: italic;
+      margin-top: 1px;
+    }
+
+    .rrow--highlight {
+      background: #e8f2f7;
+    }
+    .rrow--highlight .rrow__k { color: #1d4e89; }
+    .rrow--highlight .rrow__v { color: #1d4e89; }
+
+    .rrow--warn {
+      background: #fde8dc;
+    }
+    .rrow--warn .rrow__k { color: var(--warn); }
+    .rrow--warn .rrow__v { color: var(--warn); font-size: 0.9rem; }
+
+    .results-panel__note {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.45;
+      padding: 10px 14px 6px;
+      border-top: 1px solid var(--line);
+      background: #f6f1e7;
+    }
+
+    .results-panel__actions {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px 12px;
+      background: #f6f1e7;
+      border-top: 1px solid var(--line);
+    }
+
+    .viz-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 4px 8px 8px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .viz-head h3 {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+      color: var(--brown);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .swatch {
+      width: 18px; height: 3px; border-radius: 2px; display: inline-block;
+    }
+    .swatch.screen {
+      height: 10px;
+      background:
+        repeating-linear-gradient(90deg, #52796f 0 2px, transparent 2px 4px);
+      border: 1px solid #365349;
+      border-radius: 2px;
+    }
+    .swatch.target {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #9a3412; border: 2px solid #fff;
+      box-shadow: 0 0 0 1px #9a3412;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      flex: 1;
+      border-radius: 10px;
+      background: #f7f3ea;
+      cursor: crosshair;
+      display: block;
+    }
+
+    footer.eq {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 8px 8px 2px;
+      line-height: 1.5;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--ink);
+      color: #f8ecd8;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 100;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 1200px) {
+      .app { grid-template-columns: 320px 1fr; }
+      .results-panel { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .viz-wrap { min-height: 480px; }
+      .header-actions { width: 100%; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="mark">AW</div>
+        <div>
+          <h1>Angled Monitoring Well Calculator</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn" id="clearBtn">Clear all</button>
+        <button type="button" class="btn" id="resetBtn">Reset defaults</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h3>Inputs</h3>
+
+      <div class="field">
+        <label>Units</label>
+        <div class="seg seg--compact" id="unitSeg">
+          <button type="button" class="active" data-unit="ft">feet</button>
+          <button type="button" data-unit="m">meters</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Depth to water <span class="hint" id="u1">(ft bgs)</span></label>
+        <input type="number" id="dtw" min="0" step="0.1" value="10" />
+      </div>
+
+      <div class="well-box well-box--vertical">
+        <div class="well-box__label">Regular Shallow Well</div>
+
+        <div class="field">
+          <label>Total depth <span class="hint" id="u2">(ft bgs)</span></label>
+          <input type="number" id="vdepth" min="0" step="0.1" value="15" />
+        </div>
+
+        <div class="toggle-row" id="vscToggleRow">
+          <input type="checkbox" id="vscOn" checked />
+          <label for="vscOn">Show screen interval</label>
+        </div>
+        <div class="subfields" id="vscFields" data-disabled="true">
+          <div class="row-2">
+            <div class="field">
+              <label>Screen top <span class="hint" id="u4a">(ft bgs)</span></label>
+              <input type="number" id="vsTop" min="0" step="0.1" value="5" />
+            </div>
+            <div class="field">
+              <label>Screen bottom <span class="hint" id="u4b">(ft bgs)</span></label>
+              <input type="number" id="vsBot" min="0" step="0.1" value="15" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="well-box well-box--angled">
+        <div class="well-box__label">Angled Well</div>
+
+        <div class="field">
+          <label>Angle convention</label>
+          <div class="seg" id="convSeg">
+            <button type="button" class="active" data-conv="horiz">from horizontal</button>
+            <button type="button" data-conv="vert">from vertical</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label id="angleLabel">Entry angle from horizontal <span class="hint">(degrees at grade)</span></label>
+          <input type="number" id="angle" min="1" max="89" step="0.5" value="30" />
+          <div class="presets" id="presets" style="margin-top:8px"></div>
+        </div>
+
+        <div class="field">
+          <label>Length (measured depth) <span class="hint" id="u3">(ft along hole)</span></label>
+          <input type="number" id="length" min="0.1" step="0.1" value="25" />
+        </div>
+
+        <div class="toggle-row" id="ascToggleRow">
+          <input type="checkbox" id="ascOn" checked />
+          <label for="ascOn">Show screen interval</label>
+        </div>
+        <div class="subfields" id="ascFields" data-disabled="true">
+          <div class="row-2">
+            <div class="field">
+              <label>Screen top <span class="hint" id="u5a">(ft along hole)</span></label>
+              <input type="number" id="asTop" min="0" step="0.1" value="15" />
+            </div>
+            <div class="field">
+              <label>Screen bottom <span class="hint" id="u5b">(ft along hole)</span></label>
+              <input type="number" id="asBot" min="0" step="0.1" value="25" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-row" id="tgtToggleRow">
+        <input type="checkbox" id="tgtOn" />
+        <label for="tgtOn">Show target point (plume, tank, feature)</label>
+      </div>
+      <div class="subfields" id="tgtFields" data-disabled="true">
+        <div class="row-2">
+          <div class="field">
+            <label>Horizontal offset <span class="hint" id="u6a">(ft from origin)</span></label>
+            <input type="number" id="tx" min="0" step="0.1" value="20" />
+          </div>
+          <div class="field">
+            <label>Depth <span class="hint" id="u6b">(ft bgs)</span></label>
+            <input type="number" id="tz" min="0" step="0.1" value="12" />
+          </div>
+        </div>
+        <button type="button" class="btn ghost" id="fitAngleBtn" style="font-size:0.75rem;padding:6px 8px">Auto-fit angle to pass through target</button>
+      </div>
+
+      <details class="abbrev-note">
+        <summary>Abbreviations used in this tool</summary>
+        <dl>
+          <dt>DTW</dt><dd>depth to water (measured from ground surface down to the top of the water table)</dd>
+          <dt>MW</dt><dd>monitoring well</dd>
+          <dt>WT</dt><dd>water table</dd>
+          <dt>GW</dt><dd>groundwater</dd>
+          <dt>TD</dt><dd>total depth (bottom of the well)</dd>
+          <dt>MD</dt><dd>measured depth (distance along the well hole, not straight down)</dd>
+          <dt>TVD</dt><dd>true vertical depth (straight-down depth below ground surface)</dd>
+          <dt>bgs</dt><dd>below ground surface</dd>
+        </dl>
+      </details>
+    </section>
+
+    <section class="viz-wrap">
+      <div class="viz-head">
+        <h3>Cross-section</h3>
+        <div class="legend">
+          <span><i class="swatch" style="background:#6b4a2e;height:6px"></i> ground surface</span>
+          <span><i class="swatch" style="background:#2a6f97"></i> water table</span>
+          <span><i class="swatch" style="background:#2f4f3e;height:4px"></i> vertical well</span>
+          <span><i class="swatch" style="background:#b45309;height:4px"></i> angled well</span>
+          <span><i class="swatch screen"></i> screen</span>
+          <span><i class="swatch" style="background:#1d4e89;height:3px"></i> WT offset</span>
+          <span id="tgtLegend" style="display:none"><i class="swatch target"></i> target</span>
+        </div>
+      </div>
+      <canvas id="cv"></canvas>
+      <div class="eq" id="eq"></div>
+    </section>
+
+    <section class="results-panel">
+      <div class="results-panel__header">Key Measurements</div>
+      <div class="results-panel__body" id="results"></div>
+      <div class="results-panel__note" id="geomNote"></div>
+      <div class="results-panel__actions">
+        <button type="button" class="btn" id="copyBtn" style="flex:1">Copy summary</button>
+        <button type="button" class="btn primary" id="exportPdfBtn" style="flex:1">Export PDF</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">Summary copied to clipboard</div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const DEFAULTS = {
+      unit: "ft",
+      conv: "horiz",
+      dtw: 10,
+      vdepth: 15,
+      vsTop: 5,
+      vsBot: 15,
+      angle: 30,
+      length: 25,
+      asTop: 15,
+      asBot: 25,
+      tx: 20,
+      tz: 12,
+      vscOn: true,
+      ascOn: true,
+      tgtOn: false
+    };
+
+    const state = {
+      unit: "ft",
+      conv: "horiz"
+    };
+
+    const numericInputs = ["dtw", "vdepth", "vsTop", "vsBot", "angle", "length", "asTop", "asBot", "tx", "tz"];
+    numericInputs.forEach((id) => $(id).addEventListener("input", render));
+
+    // Segment toggles
+    document.querySelectorAll("#unitSeg button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#unitSeg button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.unit = btn.dataset.unit;
+        updateUnitLabels();
+        render();
+      });
+    });
+
+    document.querySelectorAll("#convSeg button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#convSeg button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.conv = btn.dataset.conv;
+        $("angleLabel").innerHTML = state.conv === "horiz"
+          ? 'Entry angle from horizontal <span class="hint">(degrees at grade)</span>'
+          : 'Entry angle from vertical <span class="hint">(inclination / deviation)</span>';
+        buildPresets();
+        render();
+      });
+    });
+
+    // Preset chips (rebuild so labels match the current convention)
+    function buildPresets() {
+      const values = [30, 45, 53, 60, 75];
+      const conv = state.conv;
+      const container = $("presets");
+      container.innerHTML = "";
+      values.forEach((h) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "chip";
+        chip.dataset.h = h;
+        chip.textContent = conv === "horiz"
+          ? `${h}° horiz`
+          : `${90 - h}° vert`;
+        chip.addEventListener("click", () => {
+          $("angle").value = conv === "horiz" ? h : (90 - h);
+          render();
+        });
+        container.appendChild(chip);
+      });
+    }
+
+    // Optional-section toggles
+    function bindToggle(rowId, checkId, fieldsId, stateKey) {
+      const row = $(rowId);
+      const check = $(checkId);
+      const fields = $(fieldsId);
+      const sync = () => {
+        fields.dataset.disabled = check.checked ? "false" : "true";
+        state[stateKey] = check.checked;
+        if (checkId === "tgtOn") {
+          $("tgtLegend").style.display = check.checked ? "inline-flex" : "none";
+        }
+        render();
+      };
+      check.addEventListener("change", sync);
+      // Click anywhere on the toggle row (except the checkbox itself, which fires on its own)
+      row.addEventListener("click", (e) => {
+        if (e.target === check || e.target.tagName === "LABEL") return;
+        check.checked = !check.checked;
+        sync();
+      });
+      sync();
+    }
+    bindToggle("vscToggleRow", "vscOn", "vscFields", "vscOn");
+    bindToggle("ascToggleRow", "ascOn", "ascFields", "ascOn");
+    bindToggle("tgtToggleRow", "tgtOn", "tgtFields", "tgtOn");
+
+    // Auto-fit angle to hit target
+    $("fitAngleBtn").addEventListener("click", () => {
+      const tx = num("tx");
+      const tz = num("tz");
+      if (tx <= 0 || tz <= 0) return;
+      const fromHoriz = Math.atan2(tz, tx) * 180 / Math.PI;
+      const val = state.conv === "horiz" ? fromHoriz : (90 - fromHoriz);
+      $("angle").value = val.toFixed(1);
+      // Also suggest a length that reaches the target, if too short
+      const md = Math.hypot(tx, tz);
+      if (md > num("length")) $("length").value = md.toFixed(1);
+      render();
+    });
+
+    // Copy summary
+    $("copyBtn").addEventListener("click", async () => {
+      const text = buildSummary(calc());
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Summary copied to clipboard");
+      } catch {
+        // Fallback for browsers without clipboard API
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); showToast("Summary copied to clipboard"); }
+        catch { showToast("Copy failed"); }
+        document.body.removeChild(ta);
+      }
+      const btn = $("copyBtn");
+      btn.classList.add("copied");
+      btn.textContent = "Copied";
+      setTimeout(() => { btn.classList.remove("copied"); btn.textContent = "Copy summary"; }, 1400);
+    });
+
+    // Reset defaults
+    $("resetBtn").addEventListener("click", () => {
+      state.unit = DEFAULTS.unit;
+      state.conv = DEFAULTS.conv;
+      document.querySelectorAll("#unitSeg button").forEach((b) => b.classList.toggle("active", b.dataset.unit === DEFAULTS.unit));
+      document.querySelectorAll("#convSeg button").forEach((b) => b.classList.toggle("active", b.dataset.conv === DEFAULTS.conv));
+      $("angleLabel").innerHTML = 'Entry angle from horizontal <span class="hint">(degrees at grade)</span>';
+      updateUnitLabels();
+      buildPresets();
+      numericInputs.forEach((id) => { $(id).value = DEFAULTS[id]; });
+      ["vscOn", "ascOn", "tgtOn"].forEach((k) => {
+        const el = $(k);
+        el.checked = DEFAULTS[k];
+        el.dispatchEvent(new Event("change"));
+      });
+      render();
+    });
+
+    // Clear all inputs: blanks the numeric fields, unchecks the optional
+    // toggles, and leaves units / angle convention on their defaults.
+    $("clearBtn").addEventListener("click", () => {
+      numericInputs.forEach((id) => { $(id).value = ""; });
+      ["vscOn", "ascOn", "tgtOn"].forEach((k) => {
+        const el = $(k);
+        el.checked = false;
+        el.dispatchEvent(new Event("change"));
+      });
+      render();
+      showToast("Inputs cleared");
+    });
+
+    function updateUnitLabels() {
+      const u = state.unit;
+      $("u1").textContent = `(${u} bgs)`;
+      $("u2").textContent = `(${u} bgs)`;
+      $("u3").textContent = `(${u} along hole)`;
+      $("u4a").textContent = `(${u} bgs)`;
+      $("u4b").textContent = `(${u} bgs)`;
+      $("u5a").textContent = `(${u} along hole)`;
+      $("u5b").textContent = `(${u} along hole)`;
+      $("u6a").textContent = `(${u} from origin)`;
+      $("u6b").textContent = `(${u} bgs)`;
+    }
+
+    function num(id) {
+      const v = parseFloat($(id).value);
+      return Number.isFinite(v) ? v : 0;
+    }
+
+    function calc() {
+      const unit = state.unit;
+      // Track which sub-drawings we should render, based on raw (non-clamped)
+      // input. When a field is empty the parseFloat returns NaN and we treat
+      // it as "not provided" so the drawing can skip that element.
+      const rawDtw     = parseFloat($("dtw").value);
+      const rawVdepth  = parseFloat($("vdepth").value);
+      const rawLength  = parseFloat($("length").value);
+      const hasDtw      = Number.isFinite(rawDtw) && rawDtw > 0;
+      const hasVertical = Number.isFinite(rawVdepth) && rawVdepth > 0;
+      const hasAngled   = Number.isFinite(rawLength) && rawLength > 0;
+      const isEmpty = !hasDtw && !hasVertical && !hasAngled;
+
+      const dtw = hasDtw ? rawDtw : 0;
+      const vdepth = hasVertical ? rawVdepth : 0;
+      let angIn = num("angle");
+      angIn = Math.min(89, Math.max(1, angIn));
+      const L = hasAngled ? rawLength : 0.01;
+
+      const fromHoriz = state.conv === "horiz" ? angIn : (90 - angIn);
+      const fromVert = 90 - fromHoriz;
+      const radH = fromHoriz * Math.PI / 180;
+      const sinH = Math.sin(radH);
+      const cosH = Math.cos(radH);
+      const tanH = Math.tan(radH);
+
+      const tvd = L * sinH;
+      const reach = L * cosH;
+
+      const angledReachesWater = hasAngled && tvd >= dtw && dtw > 0;
+      const vertReachesWater = vdepth >= dtw && dtw > 0;
+      const alongToWater = dtw > 0 ? dtw / sinH : 0;
+      const offsetWT = dtw > 0 ? dtw / tanH : 0;
+
+      // Screen intervals
+      const vscOn = state.vscOn;
+      let vsTop = num("vsTop"), vsBot = num("vsBot");
+      if (vsTop > vsBot) [vsTop, vsBot] = [vsBot, vsTop];
+      vsTop = Math.max(0, vsTop);
+      vsBot = Math.max(vsTop, vsBot);
+
+      const ascOn = state.ascOn;
+      let asTop = num("asTop"), asBot = num("asBot");
+      if (asTop > asBot) [asTop, asBot] = [asBot, asTop];
+      asTop = Math.max(0, asTop);
+      asBot = Math.max(asTop, asBot);
+      // Clip screen to well length for reporting
+      const asTopClip = Math.min(asTop, L);
+      const asBotClip = Math.min(asBot, L);
+      const asTopTVD = asTopClip * sinH;
+      const asBotTVD = asBotClip * sinH;
+      const asTopReach = asTopClip * cosH;
+      const asBotReach = asBotClip * cosH;
+
+      // Target point (optional)
+      const tgtOn = state.tgtOn;
+      const tx = Math.max(0, num("tx"));
+      const tz = Math.max(0, num("tz"));
+      // Perpendicular signed distance from line (origin, direction (cosH, sinH)) to point (tx,tz)
+      // signed: positive = point is below the line (deeper than the well at that horizontal position)
+      const signedMiss = tx * sinH - tz * cosH;
+      const targetMiss = Math.abs(signedMiss);
+      // Projection along the well direction, in MD units
+      const targetProj = tx * cosH + tz * sinH;
+      const targetOnPath = targetProj >= 0 && targetProj <= L && targetMiss < 0.05;
+      const targetAheadOfEnd = targetProj > L;
+
+      return {
+        unit, dtw, vdepth, L, fromHoriz, fromVert, tvd, reach,
+        hasDtw, hasVertical, hasAngled, isEmpty,
+        angledReachesWater, vertReachesWater, alongToWater, offsetWT,
+        vscOn, vsTop, vsBot, vertReachesScreen: dtw > 0 && vsBot > dtw,
+        ascOn, asTop, asBot, asTopClip, asBotClip, asTopTVD, asBotTVD, asTopReach, asBotReach,
+        angScreenClipped: (asTop > L || asBot > L),
+        tgtOn, tx, tz, targetMiss, signedMiss, targetProj, targetOnPath, targetAheadOfEnd
+      };
+    }
+
+    function fmt(v, digits = 2) {
+      if (!Number.isFinite(v)) return "n/a";
+      return v.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+    }
+
+    function renderResults(c) {
+      const u = c.unit;
+      const items = [];
+
+      if (c.dtw > 0) {
+        items.push({
+          cls: "stat primary",
+          k: "Angled well length to reach DTW",
+          v: `${fmt(c.alongToWater)} ${u} along hole`,
+          sub: `MD = DTW / sin(θh) = ${fmt(c.dtw)} / sin(${fmt(c.fromHoriz, 1)}°). Current L is ${fmt(c.L)} ${u}${c.angledReachesWater ? " (reaches WT)." : "; extend to at least this length to intersect the water table."}`
+        });
+      }
+
+      if (c.angledReachesWater) {
+        items.push({
+          cls: "stat primary",
+          k: "Water-table intersection offset",
+          v: `${fmt(c.offsetWT)} ${u}`,
+          sub: "horizontal distance between the two wells at the water table"
+        });
+      } else if (c.dtw > 0) {
+        items.push({
+          cls: "stat warn",
+          k: "Angled well does not reach the water table",
+          v: `TVD ${fmt(c.tvd)} ${u} < DTW ${fmt(c.dtw)} ${u}`
+        });
+      }
+
+      if (c.hasAngled) {
+        items.push({
+          cls: "stat",
+          k: "Angled well true vertical depth (TVD)",
+          v: `${fmt(c.tvd)} ${u} bgs`
+        });
+
+        items.push({
+          cls: "stat",
+          k: "Angled well horizontal reach at TD",
+          v: `${fmt(c.reach)} ${u}`
+        });
+
+        items.push({
+          cls: "stat",
+          k: "Equivalent angles",
+          v: `${fmt(c.fromHoriz, 1)}° from horiz  ·  ${fmt(c.fromVert, 1)}° from vert`
+        });
+      }
+
+      if (c.dtw > 0 && c.hasVertical && !c.vertReachesWater) {
+        items.push({
+          cls: "stat warn",
+          k: "Vertical well is too shallow for GW",
+          v: `TD ${fmt(c.vdepth)} ${u} < DTW ${fmt(c.dtw)} ${u}`
+        });
+      }
+
+      if (c.ascOn) {
+        const sub = c.angScreenClipped
+          ? "Screen interval exceeds the well length; values are clipped to L."
+          : (c.dtw > 0
+              ? (c.asBotTVD >= c.dtw && c.asTopTVD <= c.dtw
+                  ? "Screen straddles the water table."
+                  : (c.asTopTVD > c.dtw ? "Screen is fully submerged (below WT)." : "Screen is above the water table."))
+              : "");
+        items.push({
+          cls: "stat",
+          k: "Angled screen TVD range",
+          v: `${fmt(c.asTopTVD)} to ${fmt(c.asBotTVD)} ${u} bgs`,
+          sub
+        });
+        items.push({
+          cls: "stat",
+          k: "Angled screen horizontal reach range",
+          v: `${fmt(c.asTopReach)} to ${fmt(c.asBotReach)} ${u}`
+        });
+      }
+
+      if (c.vscOn && c.dtw > 0) {
+        const above = c.vsBot < c.dtw;
+        items.push({
+          cls: above ? "stat warn" : "stat",
+          k: "Vertical screen vs WT",
+          v: above
+            ? `Screen ends above WT (${fmt(c.vsBot)} < ${fmt(c.dtw)} ${u})`
+            : (c.vsTop >= c.dtw ? "Screen fully submerged" : "Screen straddles WT")
+        });
+      }
+
+      if (c.tgtOn) {
+        let kText, vText, subText, cls;
+        if (c.targetMiss < 0.05) {
+          cls = "stat primary";
+          kText = "Target on angled well trajectory";
+          vText = `MD ${fmt(c.targetProj)} ${u} along hole`;
+          subText = c.targetAheadOfEnd ? "Beyond current TD; extend L to reach." : "Within current well length.";
+        } else {
+          cls = "stat";
+          kText = "Perpendicular distance from trajectory to target";
+          vText = `${fmt(c.targetMiss)} ${u}`;
+          subText = (c.signedMiss > 0 ? "Well runs above target (target is deeper)." : "Well runs below target (target is shallower).");
+        }
+        items.push({ cls, k: kText, v: vText, sub: subText });
+      }
+
+      if (items.length === 0) {
+        $("results").innerHTML =
+          `<div class="rrow" style="text-align:center;padding:26px 14px;color:var(--muted);font-style:italic">Enter values in the input panel to see key measurements here.</div>`;
+      } else {
+        $("results").innerHTML = items.map((it) => {
+          const cls = it.cls === "stat primary" ? "rrow rrow--highlight"
+                    : it.cls === "stat warn"    ? "rrow rrow--warn"
+                    : "rrow";
+          return `<div class="${cls}"><div class="rrow__k">${it.k}</div><div class="rrow__v">${it.v}</div>${it.sub ? `<div class="rrow__sub">${it.sub}</div>` : ""}</div>`;
+        }).join("");
+      }
+
+      const gn = $("geomNote");
+      if (c.isEmpty) {
+        gn.textContent = "";
+        gn.style.display = "none";
+      } else {
+        gn.textContent = "Planar right triangle: both wells share a ground-surface origin. Ground is treated as horizontal.";
+        gn.style.display = "";
+      }
+
+      $("eq").textContent = c.isEmpty ? "" :
+        `θh = ${fmt(c.fromHoriz,1)}° from horizontal.  ` +
+        `TVD = L · sin(θh) = ${fmt(c.tvd)} ${u}.  ` +
+        `Reach = L · cos(θh) = ${fmt(c.reach)} ${u}.  ` +
+        (c.dtw > 0 ? `WT offset Δx = DTW / tan(θh) = ${fmt(c.offsetWT)} ${u}.  MD to water = DTW / sin(θh) = ${fmt(c.alongToWater)} ${u}.` : "");
+
+      // Preset chip active state
+      document.querySelectorAll("#presets .chip").forEach((chip) => {
+        chip.classList.toggle("active", Math.abs(Number(chip.dataset.h) - c.fromHoriz) < 0.05);
+      });
+    }
+
+    function buildSummary(c) {
+      const u = c.unit;
+      const lines = [];
+      lines.push(`Angled Monitoring Well Calculator Summary`);
+      lines.push(`Generated ${new Date().toISOString().slice(0, 19).replace("T", " ")}`);
+      lines.push(``);
+      lines.push(`Units: ${u}`);
+      lines.push(`Angle convention: from ${state.conv === "horiz" ? "horizontal" : "vertical"}`);
+      lines.push(``);
+      lines.push(`INPUTS`);
+      lines.push(`  Depth to water (DTW):            ${fmt(c.dtw)} ${u} bgs`);
+      lines.push(`  Shallow vertical well TD:        ${fmt(c.vdepth)} ${u} bgs`);
+      if (c.vscOn) {
+        lines.push(`  Vertical well screen interval:   ${fmt(c.vsTop)} to ${fmt(c.vsBot)} ${u} bgs`);
+      }
+      lines.push(`  Angled well entry angle:         ${fmt(c.fromHoriz, 1)}° from horizontal (${fmt(c.fromVert, 1)}° from vertical)`);
+      lines.push(`  Angled well length (MD):         ${fmt(c.L)} ${u}`);
+      if (c.ascOn) {
+        lines.push(`  Angled well screen interval:     ${fmt(c.asTop)} to ${fmt(c.asBot)} ${u} along hole`);
+      }
+      if (c.tgtOn) {
+        lines.push(`  Target point:                    Δx = ${fmt(c.tx)} ${u}, depth = ${fmt(c.tz)} ${u} bgs`);
+      }
+      lines.push(``);
+      lines.push(`RESULTS`);
+      if (c.dtw > 0) {
+        lines.push(`  Angled well length to reach DTW: ${fmt(c.alongToWater)} ${u} along hole${c.angledReachesWater ? "" : "  (current L = " + fmt(c.L) + " " + u + " does not reach the water table)"}`);
+      }
+      lines.push(`  Angled well TVD at TD:           ${fmt(c.tvd)} ${u} bgs`);
+      lines.push(`  Angled well horizontal reach:    ${fmt(c.reach)} ${u}`);
+      if (c.angledReachesWater) {
+        lines.push(`  Water-table intersection offset: ${fmt(c.offsetWT)} ${u}`);
+      }
+      if (c.dtw > 0 && !c.vertReachesWater) {
+        lines.push(`  NOTE: shallow vertical well TD (${fmt(c.vdepth)} ${u}) is shallower than DTW (${fmt(c.dtw)} ${u}).`);
+      }
+      if (c.ascOn) {
+        lines.push(`  Angled screen TVD range:         ${fmt(c.asTopTVD)} to ${fmt(c.asBotTVD)} ${u} bgs`);
+        lines.push(`  Angled screen reach range:       ${fmt(c.asTopReach)} to ${fmt(c.asBotReach)} ${u}`);
+        if (c.angScreenClipped) lines.push(`  NOTE: angled screen interval was clipped to well length L = ${fmt(c.L)} ${u}.`);
+      }
+      if (c.tgtOn) {
+        if (c.targetMiss < 0.05) {
+          lines.push(`  Target lies on trajectory at MD:  ${fmt(c.targetProj)} ${u}${c.targetAheadOfEnd ? " (beyond current TD)" : ""}`);
+        } else {
+          lines.push(`  Perpendicular miss from target:   ${fmt(c.targetMiss)} ${u} (${c.signedMiss > 0 ? "well above target" : "well below target"})`);
+        }
+      }
+      lines.push(``);
+      lines.push(`EQUATIONS`);
+      lines.push(`  TVD = L · sin(θh)`);
+      lines.push(`  Reach = L · cos(θh)`);
+      lines.push(`  WT horizontal offset = DTW / tan(θh)`);
+      lines.push(`  MD to water = DTW / sin(θh)`);
+      lines.push(``);
+      lines.push(`ABBREVIATIONS`);
+      lines.push(`  DTW = depth to water`);
+      lines.push(`  MW  = monitoring well`);
+      lines.push(`  WT  = water table`);
+      lines.push(`  GW  = groundwater`);
+      lines.push(`  TD  = total depth (bottom of the well)`);
+      lines.push(`  MD  = measured depth (along the well hole)`);
+      lines.push(`  TVD = true vertical depth (straight-down depth below ground)`);
+      lines.push(`  bgs = below ground surface`);
+      return lines.join("\n");
+    }
+
+    function draw(c) {
+      const canvas = $("cv");
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const cssW = canvas.clientWidth;
+      const cssH = canvas.clientHeight;
+      if (cssW === 0 || cssH === 0) return;
+      canvas.width = Math.max(1, Math.floor(cssW * dpr));
+      canvas.height = Math.max(1, Math.floor(cssH * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const W = cssW;
+      const H = cssH;
+      ctx.clearRect(0, 0, W, H);
+
+      // World extents in user units (positive depth downward)
+      // Include all key features so the plot covers everything we draw.
+      // When the app is in empty state (nothing entered), use a sensible
+      // default extent so axes and grade line are visible at a useful scale.
+      const emptyFloor = c.isEmpty ? 20 : 1;
+      const xCandidates = [c.reach, emptyFloor];
+      if (c.dtw > 0) xCandidates.push(c.offsetWT);
+      if (c.tgtOn) xCandidates.push(c.tx);
+      if (c.ascOn) xCandidates.push(c.asBotReach);
+      const xNeeded = Math.max(...xCandidates) * 1.18;
+
+      const zCandidates = [c.tvd, c.vdepth, c.dtw, emptyFloor];
+      if (c.tgtOn) zCandidates.push(c.tz);
+      if (c.vscOn) zCandidates.push(c.vsBot);
+      if (c.ascOn) zCandidates.push(c.asBotTVD);
+      const zNeeded = Math.max(...zCandidates) * 1.22;
+
+      const padL = 72;
+      const padR = 28;
+      const padT = 56;
+      const padB = 48;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      // Equal pixel-per-foot scale on BOTH axes so the drawn well angle
+      // matches the entered angle (a 30 degree well looks like 30 degrees).
+      // Whichever axis is more constrained sets the scale; the other axis
+      // is extended so all available pixels are used.
+      const scale = Math.min(plotW / xNeeded, plotH / zNeeded);
+      const maxX = plotW / scale;
+      const maxZ = plotH / scale;
+
+      const xOf = (x) => padL + x * scale;
+      const yOf = (z) => padT + z * scale;
+
+      // Water body below WT (the only remaining background fill)
+      if (c.dtw > 0) {
+        const yW = yOf(c.dtw);
+        const grd = ctx.createLinearGradient(0, yW, 0, H);
+        grd.addColorStop(0, "rgba(42,111,151,0.18)");
+        grd.addColorStop(1, "rgba(42,111,151,0.32)");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, yW, W, H - yW);
+      }
+
+      // Ground surface band
+      ctx.fillStyle = "#6b4a2e";
+      ctx.fillRect(0, padT - 7, W, 7);
+      ctx.fillStyle = "#8a6238";
+      ctx.fillRect(0, padT - 3, W, 3);
+
+      // Grade label
+      ctx.fillStyle = "#4a301c";
+      ctx.font = "600 12px 'Source Sans 3', sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("Ground surface (at grade)  ·  elevation datum 0", padL, 22);
+
+      // Grid + axes
+      ctx.strokeStyle = "rgba(90,70,40,0.16)";
+      ctx.lineWidth = 1;
+      const xTicks = niceTicks(0, maxX, 6);
+      const zTicks = niceTicks(0, maxZ, 6);
+
+      ctx.font = "11px 'IBM Plex Mono', monospace";
+      ctx.fillStyle = "#5c564c";
+      ctx.textAlign = "center";
+      xTicks.forEach((x) => {
+        const px = xOf(x);
+        ctx.beginPath();
+        ctx.moveTo(px, padT);
+        ctx.lineTo(px, H - padB);
+        ctx.stroke();
+        ctx.fillText(`${fmt(x, 1)}`, px, H - padB + 16);
+      });
+      ctx.textAlign = "right";
+      zTicks.forEach((z) => {
+        const py = yOf(z);
+        ctx.beginPath();
+        ctx.moveTo(padL, py);
+        ctx.lineTo(W - padR, py);
+        ctx.stroke();
+        if (z > 0) ctx.fillText(`${fmt(z, 1)}`, padL - 8, py + 4);
+      });
+
+      // Axis titles
+      ctx.save();
+      ctx.fillStyle = "#3d3428";
+      ctx.font = "600 11px 'Source Sans 3', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`Horizontal offset (${c.unit})`, padL + plotW / 2, H - 8);
+      ctx.translate(16, padT + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(`Depth below ground surface (${c.unit} bgs)`, 0, 0);
+      ctx.restore();
+
+      // Water table line
+      if (c.dtw > 0) {
+        const yW = yOf(c.dtw);
+        ctx.strokeStyle = "#2a6f97";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, yW);
+        ctx.lineTo(W, yW);
+        ctx.stroke();
+
+        // Wave ticks
+        ctx.strokeStyle = "#4f92b5";
+        ctx.lineWidth = 1.2;
+        for (let x = padL + 8; x < W - padR; x += 18) {
+          ctx.beginPath();
+          ctx.moveTo(x, yW);
+          ctx.quadraticCurveTo(x + 4, yW - 3, x + 8, yW);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#1d4e89";
+        ctx.font = "600 12px 'Source Sans 3', sans-serif";
+        ctx.textAlign = "left";
+        ctx.fillText(`Water table  ·  DTW = ${fmt(c.dtw)} ${c.unit} bgs`, padL + 8, yW - 8);
+      }
+
+      const originX = xOf(0);
+      const originY = yOf(0);
+
+      // Right-triangle construction (dashed, drawn first so wells overlay)
+      // Only drawn when we have an angled well to reference.
+      const vBottomActual = Math.max(c.vdepth, 0);
+      if (c.hasAngled) {
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = "rgba(28,25,20,0.35)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        const dashedVerticalStart = Math.max(vBottomActual, 0);
+        if (c.tvd > dashedVerticalStart) {
+          ctx.moveTo(originX, yOf(dashedVerticalStart));
+          ctx.lineTo(originX, yOf(c.tvd));
+        }
+        ctx.moveTo(originX, yOf(c.tvd));
+        ctx.lineTo(xOf(c.reach), yOf(c.tvd));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Vertical well
+      if (c.hasVertical) {
+        ctx.strokeStyle = "#2f4f3e";
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(originX, yOf(vBottomActual));
+        ctx.stroke();
+
+        // Vertical well monument
+        ctx.fillStyle = "#2f4f3e";
+        ctx.fillRect(originX - 5, originY - 16, 10, 16);
+        ctx.fillStyle = "#c9a227";
+        ctx.fillRect(originX - 7, originY - 20, 14, 5);
+
+        // Vertical screen (hatched, drawn as thicker segment)
+        if (c.vscOn) {
+          const sTop = Math.min(c.vsTop, c.vdepth);
+          const sBot = Math.min(c.vsBot, c.vdepth);
+          if (sBot > sTop) drawScreenVertical(ctx, originX, yOf(sTop), yOf(sBot));
+        }
+      }
+
+      // Angled well
+      const ax = xOf(c.reach);
+      const ay = yOf(c.tvd);
+      if (c.hasAngled) {
+        ctx.strokeStyle = "#b45309";
+        ctx.lineWidth = 5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(originX, originY);
+        ctx.lineTo(ax, ay);
+        ctx.stroke();
+
+        // Angled screen (hatched thicker segment along the hypotenuse)
+        if (c.ascOn) {
+          const sTop = Math.min(c.asTop, c.L);
+          const sBot = Math.min(c.asBot, c.L);
+          if (sBot > sTop) {
+            const rad = c.fromHoriz * Math.PI / 180;
+            const p1 = { x: xOf(sTop * Math.cos(rad)), y: yOf(sTop * Math.sin(rad)) };
+            const p2 = { x: xOf(sBot * Math.cos(rad)), y: yOf(sBot * Math.sin(rad)) };
+            drawScreenAngled(ctx, p1.x, p1.y, p2.x, p2.y);
+          }
+        }
+      }
+
+      // Along-hole tick marks with MD labels (only when we have an angled well)
+      if (c.hasAngled) {
+        drawMDTicksAlong(ctx, originX, originY, ax, ay, c);
+      }
+
+      // Water-table intersections and offset dimension (solid dimension line
+      // with arrow terminators, placed just below the WT so it does not
+      // obscure the water table itself).
+      if (c.dtw > 0 && c.angledReachesWater) {
+        const yW = yOf(c.dtw);
+        const xVertWT = originX;
+        const xAngWT = xOf(c.offsetWT);
+
+        ctx.fillStyle = "#2a6f97";
+        circle(ctx, xVertWT, yW, 5);
+        circle(ctx, xAngWT, yW, 5);
+
+        drawDim(ctx, xVertWT, xAngWT, yW + 14, `WT offset ${fmt(c.offsetWT)} ${c.unit}`, "#1d4e89");
+      }
+
+      // Horizontal reach dimension at TVD (labels the base of the triangle)
+      if (c.hasAngled && c.reach > 0) {
+        drawDim(ctx, originX, xOf(c.reach), yOf(c.tvd) + 24, `reach ${fmt(c.reach)} ${c.unit}`, "rgba(28,25,20,0.55)");
+      }
+
+      // TVD dimension on the right side of vertical
+      if (c.hasAngled && c.tvd > 0) {
+        drawDimVertical(ctx, originX - 26, originY, yOf(c.tvd), `TVD ${fmt(c.tvd)} ${c.unit}`, "rgba(28,25,20,0.55)");
+      }
+
+      // Angle arc at the well head. Sweep matches the current convention:
+      // - "from horizontal": arc between ground surface (0) and the well
+      // - "from vertical":   arc between the vertical (straight down, pi/2) and the well
+      if (c.hasAngled) {
+        const arcR = 42;
+        const wellA = c.fromHoriz * Math.PI / 180;
+        const halfPi = Math.PI / 2;
+        const fromVertConv = state.conv === "vert";
+        const startA = fromVertConv ? wellA : 0;
+        const endA   = fromVertConv ? halfPi : wellA;
+        const labelVal = fromVertConv ? c.fromVert : c.fromHoriz;
+
+        ctx.strokeStyle = "#8a3b12";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(originX, originY, arcR, startA, endA);
+        ctx.stroke();
+        ctx.fillStyle = "#8a3b12";
+        ctx.font = "600 12px 'IBM Plex Mono', monospace";
+        ctx.textAlign = "left";
+        const mid = (startA + endA) / 2;
+        ctx.fillText(`${fmt(labelVal, 1)}°`,
+          originX + Math.cos(mid) * (arcR + 10),
+          originY + Math.sin(mid) * (arcR + 10) + 4);
+      }
+
+      // Labels for vertical well
+      if (c.hasVertical) {
+        ctx.font = "600 12px 'Source Sans 3', sans-serif";
+        ctx.fillStyle = "#2f4f3e";
+        ctx.textAlign = "left";
+        const vLabelY = yOf(Math.min(Math.max(c.vdepth * 0.28, 1.2), maxZ * 0.28));
+        ctx.fillText("Regular shallow MW", originX + 10, vLabelY);
+        ctx.font = "11px 'IBM Plex Mono', monospace";
+        ctx.fillText(`TD ${fmt(c.vdepth)} ${c.unit}`, originX + 10, vLabelY + 14);
+      }
+
+      // Labels for angled well
+      if (c.hasAngled) {
+        ctx.fillStyle = "#9a3412";
+        ctx.font = "600 12px 'Source Sans 3', sans-serif";
+        ctx.textAlign = "left";
+        const midX = (originX + ax) / 2 + 10;
+        const midY = (originY + ay) / 2 - 8;
+        ctx.fillText("Angled well (hypotenuse)", midX, midY);
+        ctx.font = "11px 'IBM Plex Mono', monospace";
+        ctx.fillText(`L = ${fmt(c.L)} ${c.unit}`, midX, midY + 14);
+      }
+
+      // End points
+      if (c.hasVertical || c.hasAngled) {
+        ctx.fillStyle = "#1c1914";
+        circle(ctx, originX, originY, 3.5);
+      }
+      if (c.hasAngled) {
+        circle(ctx, ax, ay, 3.5);
+        ctx.font = "10px 'IBM Plex Mono', monospace";
+        ctx.fillStyle = "#5c564c";
+        ctx.textAlign = "left";
+        ctx.fillText(`TD angled`, ax + 6, ay + 4);
+      }
+      if (c.hasVertical) {
+        ctx.fillStyle = "#1c1914";
+        circle(ctx, originX, yOf(vBottomActual), 3.5);
+      }
+
+      // Empty-state hint: shown when nothing has been entered yet
+      if (c.isEmpty) {
+        ctx.font = "italic 500 14px 'Source Sans 3', sans-serif";
+        ctx.fillStyle = "rgba(92, 86, 76, 0.55)";
+        ctx.textAlign = "center";
+        ctx.fillText("Enter values in the input panel to draw the well cross-section",
+          padL + plotW / 2, padT + plotH / 2);
+      }
+
+      // Target point marker
+      if (c.tgtOn) {
+        const tX = xOf(c.tx);
+        const tY = yOf(c.tz);
+        // Perpendicular line from target to well line
+        const rad = c.fromHoriz * Math.PI / 180;
+        const projMD = Math.max(0, Math.min(c.L, c.tx * Math.cos(rad) + c.tz * Math.sin(rad)));
+        const footX = xOf(projMD * Math.cos(rad));
+        const footY = yOf(projMD * Math.sin(rad));
+
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = "#9a3412";
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(tX, tY);
+        ctx.lineTo(footX, footY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Target dot
+        ctx.fillStyle = "#9a3412";
+        circle(ctx, tX, tY, 6);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(tX, tY, 6, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = "#7a2e0e";
+        ctx.font = "600 11px 'IBM Plex Mono', monospace";
+        ctx.textAlign = "left";
+        const label = `target (${fmt(c.tx, 1)}, ${fmt(c.tz, 1)}) ${c.unit}`;
+        ctx.fillText(label, tX + 10, tY - 8);
+        if (c.targetMiss >= 0.05) {
+          ctx.fillText(`miss ${fmt(c.targetMiss)} ${c.unit}`, tX + 10, tY + 14);
+        } else {
+          ctx.fillText(`on trajectory (MD ${fmt(c.targetProj)} ${c.unit})`, tX + 10, tY + 14);
+        }
+      }
+    }
+
+    function circle(ctx, x, y, r) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawScreenVertical(ctx, x, y1, y2) {
+      // Draw hatched thicker rectangle around the vertical well
+      const w = 12;
+      ctx.save();
+      // Base fill (slightly translucent)
+      ctx.fillStyle = "rgba(82,121,111,0.35)";
+      ctx.fillRect(x - w / 2, y1, w, y2 - y1);
+      // Hatching
+      ctx.strokeStyle = "#365349";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let y = y1; y <= y2; y += 3) {
+        ctx.moveTo(x - w / 2, y);
+        ctx.lineTo(x + w / 2, y);
+      }
+      ctx.stroke();
+      // Outline
+      ctx.strokeStyle = "#365349";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(x - w / 2, y1, w, y2 - y1);
+      ctx.restore();
+    }
+
+    function drawScreenAngled(ctx, x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+      const nx = -dy / len; // unit normal
+      const ny = dx / len;
+      const w = 8;
+
+      // Build a quad around the segment
+      const p1 = { x: x1 + nx * w, y: y1 + ny * w };
+      const p2 = { x: x2 + nx * w, y: y2 + ny * w };
+      const p3 = { x: x2 - nx * w, y: y2 - ny * w };
+      const p4 = { x: x1 - nx * w, y: y1 - ny * w };
+
+      ctx.save();
+      // Fill
+      ctx.fillStyle = "rgba(82,121,111,0.35)";
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y);
+      ctx.lineTo(p4.x, p4.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hatching perpendicular to the well
+      ctx.beginPath();
+      ctx.rect(Math.min(p1.x, p3.x) - 2, Math.min(p1.y, p3.y) - 2, Math.abs(p3.x - p1.x) + 4, Math.abs(p3.y - p1.y) + 4);
+      ctx.clip();
+
+      ctx.strokeStyle = "#365349";
+      ctx.lineWidth = 1;
+      const steps = Math.floor(len / 3);
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const bx = x1 + dx * t;
+        const by = y1 + dy * t;
+        ctx.beginPath();
+        ctx.moveTo(bx + nx * w, by + ny * w);
+        ctx.lineTo(bx - nx * w, by - ny * w);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Outline
+      ctx.save();
+      ctx.strokeStyle = "#365349";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y);
+      ctx.lineTo(p4.x, p4.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawMDTicksAlong(ctx, x1, y1, x2, y2, c) {
+      const rad = c.fromHoriz * Math.PI / 180;
+      const L = c.L;
+      // Choose a nice step for MD ticks
+      const rough = L / 6;
+      const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+      const norm = rough / mag;
+      let step;
+      if (norm < 1.5) step = mag;
+      else if (norm < 3) step = 2 * mag;
+      else if (norm < 7) step = 5 * mag;
+      else step = 10 * mag;
+      if (step < 0.5) step = 0.5;
+
+      ctx.save();
+      const nx = -Math.sin(rad); // normal (perpendicular to hole, in world XZ)
+      const ny = Math.cos(rad);
+      // Convert those to screen pixel offsets
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const lenPx = Math.hypot(dx, dy);
+      if (lenPx < 1) { ctx.restore(); return; }
+      const ux = dx / lenPx;
+      const uy = dy / lenPx;
+      const px = -uy; // perpendicular in screen space
+      const py = ux;
+
+      // The angled screen is drawn ±8 px around the well line, so labels
+      // placed within that band get covered. We draw a one-sided leader
+      // that extends well past the screen edge and place the label at the
+      // end of the leader, with a light halo behind the text so it stays
+      // legible even where it passes near other geometry.
+      const leaderStart = 4;   // begin just outside the well line
+      const leaderEnd   = 18;  // extend well past screen edge (±8 px)
+      const labelOffset = 22;  // label sits a bit further out
+
+      ctx.strokeStyle = "rgba(122,46,14,0.9)";
+      ctx.fillStyle = "#7a2e0e";
+      ctx.font = "600 10px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 1.2;
+
+      for (let md = step; md < L + step * 0.01; md += step) {
+        if (md > L + 1e-6) break;
+        const t = md / L;
+        const bx = x1 + dx * t;
+        const by = y1 + dy * t;
+        // Leader from just outside the well line, extending past the screen
+        ctx.beginPath();
+        ctx.moveTo(bx + px * leaderStart, by + py * leaderStart);
+        ctx.lineTo(bx + px * leaderEnd,   by + py * leaderEnd);
+        ctx.stroke();
+        // Label with a soft cream halo so it stays legible
+        const text = `${fmt(md, md % 1 === 0 ? 0 : 1)}`;
+        const lx = bx + px * labelOffset;
+        const ly = by + py * labelOffset;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(251,248,241,0.9)";
+        ctx.strokeText(text, lx, ly);
+        ctx.fillText(text, lx, ly);
+        // Reset for next iteration's leader
+        ctx.strokeStyle = "rgba(122,46,14,0.9)";
+        ctx.lineWidth = 1.2;
+      }
+      ctx.textBaseline = "alphabetic";
+      ctx.restore();
+    }
+
+    function drawDim(ctx, x1, x2, y, label, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y - 6);
+      ctx.lineTo(x1, y + 6);
+      ctx.moveTo(x2, y - 6);
+      ctx.lineTo(x2, y + 6);
+      ctx.moveTo(x1, y);
+      ctx.lineTo(x2, y);
+      ctx.stroke();
+      const dir = x2 >= x1 ? 1 : -1;
+      arrow(ctx, x1, y, dir);
+      arrow(ctx, x2, y, -dir);
+      ctx.font = "600 12px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(label, (x1 + x2) / 2, y + 16);
+    }
+
+    function drawDimVertical(ctx, x, y1, y2, label, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(x - 6, y1);
+      ctx.lineTo(x + 6, y1);
+      ctx.moveTo(x - 6, y2);
+      ctx.lineTo(x + 6, y2);
+      ctx.moveTo(x, y1);
+      ctx.lineTo(x, y2);
+      ctx.stroke();
+      arrowV(ctx, x, y1, 1);
+      arrowV(ctx, x, y2, -1);
+      ctx.save();
+      ctx.font = "600 11px 'IBM Plex Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.translate(x - 8, (y1 + y2) / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+    }
+
+    function arrow(ctx, x, y, dir) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 8 * dir, y - 4);
+      ctx.lineTo(x + 8 * dir, y + 4);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function arrowV(ctx, x, y, dir) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 4, y + 8 * dir);
+      ctx.lineTo(x + 4, y + 8 * dir);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function niceTicks(min, max, target) {
+      if (max <= min) return [min];
+      const span = max - min;
+      const raw = span / target;
+      const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+      const norm = raw / mag;
+      let step;
+      if (norm < 1.5) step = mag;
+      else if (norm < 3) step = 2 * mag;
+      else if (norm < 7) step = 5 * mag;
+      else step = 10 * mag;
+      const ticks = [];
+      const start = Math.ceil(min / step) * step;
+      for (let v = start; v <= max + step * 0.01; v += step) ticks.push(Number(v.toFixed(8)));
+      if (ticks[0] !== 0) ticks.unshift(0);
+      return ticks;
+    }
+
+    function showToast(msg) {
+      const t = $("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(t._h);
+      t._h = setTimeout(() => t.classList.remove("show"), 1600);
+    }
+
+    function render() {
+      const c = calc();
+      renderResults(c);
+      draw(c);
+    }
+
+    // ==============================================================
+    // PDF EXPORT
+    // ==============================================================
+    // Exports a landscape US-Letter PDF of the cross-section only
+    // (no inputs). Everything is drawn as vector primitives so the
+    // output stays crisp at any zoom and the text is selectable.
+    // Layout: title band, parameters strip, cross-section drawing,
+    // Key Measurements callout panel, legend, formula footer.
+
+    $("exportPdfBtn").addEventListener("click", () => {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast("PDF library not loaded (check internet). Try browser Print instead.");
+        return;
+      }
+      const btn = $("exportPdfBtn");
+      const original = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Generating PDF...";
+      // Defer to next tick so the button can visually update
+      setTimeout(() => {
+        try {
+          exportPDF();
+          showToast("PDF exported");
+        } catch (err) {
+          console.error(err);
+          showToast("PDF export failed: " + (err.message || err));
+        } finally {
+          btn.disabled = false;
+          btn.textContent = original;
+        }
+      }, 30);
+    });
+
+    function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "letter" });
+
+      const c = calc();
+      const pageW = doc.internal.pageSize.getWidth();   // 792
+      const pageH = doc.internal.pageSize.getHeight();  // 612
+      const margin = 32;
+
+      // -------- Title band --------
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(15);
+      doc.setTextColor(28, 25, 20);
+      doc.text("Angled Monitoring Well Cross-Section", margin, margin + 12);
+
+      doc.setDrawColor(180, 170, 150);
+      doc.setLineWidth(0.5);
+      doc.line(margin, margin + 20, pageW - margin, margin + 20);
+
+      // -------- Parameters strip --------
+      const paramY = margin + 32;
+      const paramItems = [
+        ["DEPTH TO WATER", `${fmt(c.dtw)} ${c.unit} bgs`],
+        ["SHALLOW MW TD", `${fmt(c.vdepth)} ${c.unit} bgs`],
+        ["ENTRY ANGLE", state.conv === "vert"
+          ? `${fmt(c.fromVert, 1)}\u00B0 from vert`
+          : `${fmt(c.fromHoriz, 1)}\u00B0 from horiz`],
+        ["ANGLED WELL L", `${fmt(c.L)} ${c.unit}`],
+        ["ANGLED WELL TVD", `${fmt(c.tvd)} ${c.unit} bgs`],
+        ["ANGLED WELL REACH", `${fmt(c.reach)} ${c.unit}`]
+      ];
+      const paramColW = (pageW - 2 * margin) / paramItems.length;
+      paramItems.forEach((p, i) => {
+        const x = margin + i * paramColW;
+        doc.setFontSize(6.5);
+        doc.setTextColor(107, 74, 46);
+        doc.text(p[0], x, paramY);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(28, 25, 20);
+        doc.text(p[1], x, paramY + 12);
+        doc.setFont("helvetica", "normal");
+      });
+      doc.setDrawColor(180, 170, 150);
+      doc.line(margin, paramY + 20, pageW - margin, paramY + 20);
+
+      // -------- Layout: drawing on left, callouts on right --------
+      const drawTop = paramY + 30;
+      const drawBottom = pageH - margin - 44; // leave room for legend + footer
+      const calloutW = 210;
+      const drawLeft = margin;
+      const drawRight = pageW - margin - calloutW - 12;
+
+      drawPDFCrossSection(doc, c, drawLeft, drawTop, drawRight, drawBottom);
+      drawPDFCallouts(doc, c, drawRight + 12, drawTop, calloutW, drawBottom - drawTop);
+
+      // -------- Legend --------
+      drawPDFLegend(doc, margin, drawBottom + 14, pageW - 2 * margin, c);
+
+      // -------- Footer with abbreviations and formulas --------
+      const footerBottom = pageH - margin - 2;
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(107, 74, 46);
+      doc.text(
+        "DTW = depth to water    MW = monitoring well    WT = water table    " +
+        "GW = groundwater    TD = total depth    MD = measured depth (along hole)    " +
+        "TVD = true vertical depth    bgs = below ground surface",
+        margin, footerBottom - 10
+      );
+      doc.text(
+        "TVD = L \u00D7 sin(angle)    Reach = L \u00D7 cos(angle)    " +
+        "WT offset = DTW / tan(angle)    MD to water = DTW / sin(angle)",
+        margin, footerBottom
+      );
+
+      // -------- Save --------
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      doc.save(`angled-monitoring-well_${stamp}.pdf`);
+    }
+
+    function drawPDFCrossSection(doc, c, x0, y0, x1, y1) {
+      // Padding inside the plot frame for axis labels and grade band
+      const padL = 42;
+      const padR = 12;
+      const padT = 16;
+      const padB = 38;
+
+      const plotL = x0 + padL;
+      const plotR = x1 - padR;
+      const plotT = y0 + padT;
+      const plotB = y1 - padB;
+      const plotW = plotR - plotL;
+      const plotH = plotB - plotT;
+
+      // World extents (same logic as the on-screen draw)
+      const emptyFloor = c.isEmpty ? 20 : 1;
+      const xCandidates = [c.reach, emptyFloor];
+      if (c.dtw > 0) xCandidates.push(c.offsetWT);
+      if (c.tgtOn) xCandidates.push(c.tx);
+      if (c.ascOn) xCandidates.push(c.asBotReach);
+      const xNeeded = Math.max.apply(null, xCandidates) * 1.18;
+
+      const zCandidates = [c.tvd, c.vdepth, c.dtw, emptyFloor];
+      if (c.tgtOn) zCandidates.push(c.tz);
+      if (c.vscOn) zCandidates.push(c.vsBot);
+      if (c.ascOn) zCandidates.push(c.asBotTVD);
+      const zNeeded = Math.max.apply(null, zCandidates) * 1.22;
+
+      // Equal pixel-per-foot scale so the drawn angle matches the entered
+      // angle. Constrained axis sets the scale; other axis extends to fill.
+      const scale = Math.min(plotW / xNeeded, plotH / zNeeded);
+      const maxX = plotW / scale;
+      const maxZ = plotH / scale;
+
+      const xOf = (x) => plotL + x * scale;
+      const yOf = (z) => plotT + z * scale;
+
+      // Drawing area outline only (no background fill)
+      doc.setDrawColor(201, 192, 176);
+      doc.setLineWidth(0.5);
+      doc.rect(x0, y0, x1 - x0, y1 - y0, "S");
+
+      // Water body below WT (the only remaining background fill)
+      if (c.dtw > 0 && c.dtw < maxZ) {
+        const yW = yOf(c.dtw);
+        doc.setFillColor(42, 111, 151);
+        doc.setGState(new doc.GState({ opacity: 0.18 }));
+        doc.rect(plotL, yW, plotW, plotB - yW, "F");
+        doc.setGState(new doc.GState({ opacity: 1 }));
+      }
+
+      // Ground surface band
+      doc.setFillColor(107, 74, 46);
+      doc.rect(plotL, plotT - 4, plotW, 4, "F");
+      doc.setFillColor(138, 98, 56);
+      doc.rect(plotL, plotT - 2, plotW, 2, "F");
+
+      // Grade label
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(74, 48, 28);
+      doc.text("Ground surface (at grade, elev. 0)", plotL + 4, plotT - 7);
+      doc.setFont("helvetica", "normal");
+
+      // Grid + axis ticks
+      const xTicks = niceTicks(0, maxX, 6);
+      const zTicks = niceTicks(0, maxZ, 6);
+      doc.setDrawColor(200, 185, 155);
+      doc.setLineWidth(0.25);
+      xTicks.forEach((x) => {
+        const px = xOf(x);
+        doc.line(px, plotT, px, plotB);
+      });
+      zTicks.forEach((z) => {
+        const py = yOf(z);
+        doc.line(plotL, py, plotR, py);
+      });
+
+      doc.setFontSize(6.5);
+      doc.setTextColor(90, 84, 76);
+      xTicks.forEach((x) => {
+        if (x === 0) return;
+        doc.text(`${fmt(x, 1)}`, xOf(x), plotB + 10, { align: "center" });
+      });
+      zTicks.forEach((z) => {
+        if (z === 0) return;
+        doc.text(`${fmt(z, 1)}`, plotL - 3, yOf(z) + 2.5, { align: "right" });
+      });
+
+      // Axis titles
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(60, 52, 40);
+      doc.text(`Horizontal offset (${c.unit})`, plotL + plotW / 2, plotB + 22, { align: "center" });
+      doc.text(`Depth below grade (${c.unit} bgs)`,
+        x0 + 10, plotT + plotH / 2, { align: "center", angle: 90 });
+      doc.setFont("helvetica", "normal");
+
+      // Water table
+      if (c.dtw > 0) {
+        const yW = yOf(c.dtw);
+        doc.setDrawColor(42, 111, 151);
+        doc.setLineWidth(1);
+        doc.line(plotL, yW, plotR, yW);
+
+        // Small wave ticks
+        doc.setDrawColor(79, 146, 181);
+        doc.setLineWidth(0.4);
+        for (let x = plotL + 6; x < plotR - 6; x += 12) {
+          doc.line(x, yW, x + 3, yW - 1.3);
+          doc.line(x + 3, yW - 1.3, x + 6, yW);
+        }
+
+        doc.setFontSize(7.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(29, 78, 137);
+        doc.text(`WATER TABLE  \u00B7  DTW = ${fmt(c.dtw)} ${c.unit} bgs`, plotL + 4, yW - 3);
+        doc.setFont("helvetica", "normal");
+      }
+
+      const originX = xOf(0);
+      const originY = plotT;
+      const vBottom = Math.max(0, c.vdepth);
+
+      // Right-triangle construction (dashed)
+      doc.setLineDashPattern([3, 2], 0);
+      doc.setDrawColor(80, 70, 55);
+      doc.setLineWidth(0.4);
+      if (c.tvd > vBottom) {
+        doc.line(originX, yOf(vBottom), originX, yOf(c.tvd));
+      }
+      doc.line(originX, yOf(c.tvd), xOf(c.reach), yOf(c.tvd));
+      doc.setLineDashPattern([], 0);
+
+      // Vertical well line
+      doc.setDrawColor(47, 79, 62);
+      doc.setLineWidth(2);
+      doc.line(originX, originY, originX, yOf(vBottom));
+
+      // Vertical well monument (small)
+      doc.setFillColor(47, 79, 62);
+      doc.rect(originX - 2.5, originY - 7, 5, 7, "F");
+      doc.setFillColor(201, 162, 39);
+      doc.rect(originX - 3.5, originY - 9, 7, 2.2, "F");
+
+      // Vertical screen (hatched)
+      if (c.vscOn) {
+        const sTop = Math.min(c.vsTop, c.vdepth);
+        const sBot = Math.min(c.vsBot, c.vdepth);
+        if (sBot > sTop) drawPDFVertScreen(doc, originX, yOf(sTop), yOf(sBot));
+      }
+
+      // Angled well line
+      const ax = xOf(c.reach);
+      const ay = yOf(c.tvd);
+      doc.setDrawColor(180, 83, 9);
+      doc.setLineWidth(2);
+      doc.line(originX, originY, ax, ay);
+
+      // Angled screen (hatched, along hypotenuse)
+      if (c.ascOn) {
+        const sTop = Math.min(c.asTop, c.L);
+        const sBot = Math.min(c.asBot, c.L);
+        if (sBot > sTop) {
+          const rad = c.fromHoriz * Math.PI / 180;
+          const p1x = xOf(sTop * Math.cos(rad));
+          const p1y = yOf(sTop * Math.sin(rad));
+          const p2x = xOf(sBot * Math.cos(rad));
+          const p2y = yOf(sBot * Math.sin(rad));
+          drawPDFAngScreen(doc, p1x, p1y, p2x, p2y);
+        }
+      }
+
+      // Along-hole MD tick marks with labels
+      if (c.L > 0) {
+        const rad = c.fromHoriz * Math.PI / 180;
+        const rough = c.L / 6;
+        const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+        const norm = rough / mag;
+        let step;
+        if (norm < 1.5) step = mag;
+        else if (norm < 3) step = 2 * mag;
+        else if (norm < 7) step = 5 * mag;
+        else step = 10 * mag;
+        if (step < 0.5) step = 0.5;
+
+        const dx = ax - originX;
+        const dy = ay - originY;
+        const lenPx = Math.hypot(dx, dy);
+        if (lenPx > 1) {
+          const ux = dx / lenPx, uy = dy / lenPx;
+          const nX = -uy, nY = ux;
+
+          // Screen half-width in the PDF drawing is ~4 pt. Push labels well
+          // beyond it with a one-sided leader so the screen hatching cannot
+          // cover the MD numbers.
+          const leaderStart = 2;
+          const leaderEnd   = 10;
+          const labelOffset = 13;
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(6.5);
+
+          for (let md = step; md < c.L - 1e-6; md += step) {
+            const t = md / c.L;
+            const bx = originX + dx * t;
+            const by = originY + dy * t;
+            // Skip ticks that would crowd the angle arc / origin cluster
+            if (Math.hypot(bx - originX, by - originY) < 32) continue;
+            // One-sided leader from just outside the well line, past the screen
+            doc.setDrawColor(122, 46, 14);
+            doc.setLineWidth(0.5);
+            doc.line(bx + nX * leaderStart, by + nY * leaderStart,
+                     bx + nX * leaderEnd,   by + nY * leaderEnd);
+            // Small cream backdrop rectangle behind the label for legibility
+            const text = `${fmt(md, md % 1 === 0 ? 0 : 1)}`;
+            const lx = bx + nX * labelOffset;
+            const ly = by + nY * labelOffset;
+            const tw = doc.getTextWidth(text);
+            doc.setFillColor(251, 248, 241);
+            doc.setGState(new doc.GState({ opacity: 0.85 }));
+            doc.rect(lx - 1, ly - 5, tw + 2, 7, "F");
+            doc.setGState(new doc.GState({ opacity: 1 }));
+            doc.setTextColor(122, 46, 14);
+            doc.text(text, lx, ly);
+          }
+          doc.setFont("helvetica", "normal");
+        }
+      }
+
+      // WT intersection markers and offset dimension line (solid dim only,
+      // placed just below the water table so it does not obscure it).
+      if (c.dtw > 0 && c.angledReachesWater) {
+        const yW = yOf(c.dtw);
+        const xVertWT = originX;
+        const xAngWT = xOf(c.offsetWT);
+
+        doc.setFillColor(42, 111, 151);
+        doc.circle(xVertWT, yW, 2, "F");
+        doc.circle(xAngWT, yW, 2, "F");
+
+        drawPDFDim(doc, xVertWT, xAngWT, yW + 8,
+          `WT offset ${fmt(c.offsetWT)} ${c.unit}`, [29, 78, 137]);
+      }
+
+      // Reach dimension at the base of the triangle
+      if (c.reach > 0 && ax > originX + 2) {
+        drawPDFDim(doc, originX, ax, yOf(c.tvd) + 14,
+          `reach ${fmt(c.reach)} ${c.unit}`, [80, 70, 55]);
+      }
+
+      // TVD dimension on the left of the vertical
+      if (c.tvd > 0) {
+        drawPDFDimVertical(doc, originX - 13, originY, yOf(c.tvd),
+          `TVD ${fmt(c.tvd)} ${c.unit}`, [80, 70, 55]);
+      }
+
+      // Angle arc + label
+      // Angle arc + label. Sweep between the reference axis (horizontal or
+      // vertical) and the well, matching the current convention.
+      const arcR = 20;
+      const wellA = c.fromHoriz * Math.PI / 180;
+      const halfPi = Math.PI / 2;
+      const fromVertConv = state.conv === "vert";
+      const arcStartA = fromVertConv ? wellA : 0;
+      const arcEndA   = fromVertConv ? halfPi : wellA;
+      const arcLabelVal = fromVertConv ? c.fromVert : c.fromHoriz;
+
+      doc.setDrawColor(138, 59, 18);
+      doc.setLineWidth(0.6);
+      const arcSteps = 18;
+      let lastX = originX + Math.cos(arcStartA) * arcR;
+      let lastY = originY + Math.sin(arcStartA) * arcR;
+      for (let i = 1; i <= arcSteps; i++) {
+        const a = arcStartA + (i / arcSteps) * (arcEndA - arcStartA);
+        const nx = originX + Math.cos(a) * arcR;
+        const ny = originY + Math.sin(a) * arcR;
+        doc.line(lastX, lastY, nx, ny);
+        lastX = nx; lastY = ny;
+      }
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(138, 59, 18);
+      const midA = (arcStartA + arcEndA) / 2;
+      doc.text(`${fmt(arcLabelVal, 1)}\u00B0`,
+        originX + Math.cos(midA) * (arcR + 7),
+        originY + Math.sin(midA) * (arcR + 7) + 2);
+      doc.setFont("helvetica", "normal");
+
+      // Vertical well labels (offset far enough right to clear the angle arc)
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(47, 79, 62);
+      doc.text("Regular MW", originX + 6, plotT + 34);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.text(`TD ${fmt(c.vdepth)} ${c.unit}`, originX + 6, plotT + 42);
+
+      // Angled well label along hypotenuse (offset above the line)
+      const midHX = (originX + ax) / 2;
+      const midHY = (originY + ay) / 2;
+      const nAngleX = -(ay - originY);
+      const nAngleY = (ax - originX);
+      const nLen = Math.hypot(nAngleX, nAngleY) || 1;
+      const nUX = nAngleX / nLen, nUY = nAngleY / nLen;
+      // Push label to the upper-right side of the line
+      const labelX = midHX - nUX * 10 + 4;
+      const labelY = midHY - nUY * 10;
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(154, 52, 18);
+      doc.text("Angled well", labelX, labelY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.text(`L = ${fmt(c.L)} ${c.unit}`, labelX, labelY + 8);
+
+      // Endpoint markers
+      doc.setFillColor(28, 25, 20);
+      doc.circle(originX, originY, 1.6, "F");
+      doc.circle(ax, ay, 1.6, "F");
+      doc.circle(originX, yOf(vBottom), 1.6, "F");
+      doc.setFontSize(6);
+      doc.setTextColor(90, 84, 76);
+      doc.text(`TD angled`, ax + 3, ay + 5);
+
+      // Target marker
+      if (c.tgtOn) {
+        const tX = xOf(c.tx);
+        const tY = yOf(c.tz);
+        const rad = c.fromHoriz * Math.PI / 180;
+        const projMD = Math.max(0, Math.min(c.L, c.tx * Math.cos(rad) + c.tz * Math.sin(rad)));
+        const footX = xOf(projMD * Math.cos(rad));
+        const footY = yOf(projMD * Math.sin(rad));
+
+        doc.setLineDashPattern([2, 2], 0);
+        doc.setDrawColor(154, 52, 18);
+        doc.setLineWidth(0.5);
+        doc.line(tX, tY, footX, footY);
+        doc.setLineDashPattern([], 0);
+
+        doc.setFillColor(154, 52, 18);
+        doc.circle(tX, tY, 2.5, "F");
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.7);
+        doc.circle(tX, tY, 2.5, "S");
+
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(122, 46, 14);
+        doc.text(`Target (${fmt(c.tx, 1)}, ${fmt(c.tz, 1)}) ${c.unit}`, tX + 4, tY - 3);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6);
+        if (c.targetMiss >= 0.05) {
+          doc.text(`miss ${fmt(c.targetMiss)} ${c.unit}`, tX + 4, tY + 7);
+        } else {
+          doc.text(`on trajectory`, tX + 4, tY + 7);
+        }
+      }
+    }
+
+    // Vertical screen shape: hatched, thicker box around the vertical line
+    function drawPDFVertScreen(doc, x, y1, y2) {
+      const w = 5;
+      doc.setFillColor(82, 121, 111);
+      doc.setGState(new doc.GState({ opacity: 0.35 }));
+      doc.rect(x - w / 2, y1, w, y2 - y1, "F");
+      doc.setGState(new doc.GState({ opacity: 1 }));
+      doc.setDrawColor(54, 83, 73);
+      doc.setLineWidth(0.35);
+      for (let y = y1; y <= y2; y += 1.6) {
+        doc.line(x - w / 2, y, x + w / 2, y);
+      }
+      doc.setLineWidth(0.55);
+      doc.rect(x - w / 2, y1, w, y2 - y1, "S");
+    }
+
+    // Angled screen shape: hatched, thicker parallelogram around the hypotenuse
+    function drawPDFAngScreen(doc, x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+      const nx = -dy / len, ny = dx / len;
+      const w = 3.5;
+      const q1 = { x: x1 + nx * w, y: y1 + ny * w };
+      const q2 = { x: x2 + nx * w, y: y2 + ny * w };
+      const q3 = { x: x2 - nx * w, y: y2 - ny * w };
+      const q4 = { x: x1 - nx * w, y: y1 - ny * w };
+
+      doc.setFillColor(82, 121, 111);
+      doc.setGState(new doc.GState({ opacity: 0.35 }));
+      doc.triangle(q1.x, q1.y, q2.x, q2.y, q3.x, q3.y, "F");
+      doc.triangle(q1.x, q1.y, q3.x, q3.y, q4.x, q4.y, "F");
+      doc.setGState(new doc.GState({ opacity: 1 }));
+
+      // Hatching perpendicular to the well
+      doc.setDrawColor(54, 83, 73);
+      doc.setLineWidth(0.35);
+      const steps = Math.max(3, Math.floor(len / 1.4));
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const bx = x1 + dx * t;
+        const by = y1 + dy * t;
+        doc.line(bx + nx * w, by + ny * w, bx - nx * w, by - ny * w);
+      }
+
+      // Outline
+      doc.setLineWidth(0.55);
+      doc.line(q1.x, q1.y, q2.x, q2.y);
+      doc.line(q2.x, q2.y, q3.x, q3.y);
+      doc.line(q3.x, q3.y, q4.x, q4.y);
+      doc.line(q4.x, q4.y, q1.x, q1.y);
+    }
+
+    function drawPDFDim(doc, x1, x2, y, label, rgb) {
+      if (Math.abs(x2 - x1) < 3) return;
+      doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.setLineWidth(0.4);
+      doc.line(x1, y - 3, x1, y + 3);
+      doc.line(x2, y - 3, x2, y + 3);
+      doc.line(x1, y, x2, y);
+      const dir = x2 >= x1 ? 1 : -1;
+      doc.triangle(x1, y, x1 + 4 * dir, y - 2, x1 + 4 * dir, y + 2, "F");
+      doc.triangle(x2, y, x2 - 4 * dir, y - 2, x2 - 4 * dir, y + 2, "F");
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      doc.text(label, (x1 + x2) / 2, y + 9, { align: "center" });
+      doc.setFont("helvetica", "normal");
+    }
+
+    function drawPDFDimVertical(doc, x, y1, y2, label, rgb) {
+      if (Math.abs(y2 - y1) < 3) return;
+      doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+      doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+      doc.setLineWidth(0.4);
+      doc.line(x - 3, y1, x + 3, y1);
+      doc.line(x - 3, y2, x + 3, y2);
+      doc.line(x, y1, x, y2);
+      doc.triangle(x, y1, x - 2, y1 + 4, x + 2, y1 + 4, "F");
+      doc.triangle(x, y2, x - 2, y2 - 4, x + 2, y2 - 4, "F");
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+      doc.text(label, x - 4, (y1 + y2) / 2, { align: "center", angle: 90 });
+      doc.setFont("helvetica", "normal");
+    }
+
+    function drawPDFCallouts(doc, c, x, y, w, h) {
+      const u = c.unit;
+
+      // Panel background
+      doc.setFillColor(251, 248, 241);
+      doc.setDrawColor(201, 192, 176);
+      doc.setLineWidth(0.5);
+      doc.rect(x, y, w, h, "FD");
+
+      // Header bar
+      doc.setFillColor(107, 74, 46);
+      doc.rect(x, y, w, 17, "F");
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(248, 236, 216);
+      doc.text("KEY MEASUREMENTS", x + w / 2, y + 12, { align: "center" });
+      doc.setFont("helvetica", "normal");
+
+      const items = [];
+      if (c.dtw > 0) {
+        items.push({
+          k: "Angled well length to reach DTW",
+          v: `${fmt(c.alongToWater)} ${u} along hole`,
+          sub: `DTW / sin(${fmt(c.fromHoriz, 1)}\u00B0)`,
+          highlight: true
+        });
+      }
+      if (c.angledReachesWater) {
+        items.push({
+          k: "Water-table intersection offset",
+          v: `${fmt(c.offsetWT)} ${u}`,
+          sub: "between wells at WT",
+          highlight: true
+        });
+      } else if (c.dtw > 0) {
+        items.push({
+          k: "Angled well too short for WT",
+          v: `TVD ${fmt(c.tvd)} < DTW ${fmt(c.dtw)} ${u}`,
+          warn: true
+        });
+      }
+      items.push({ k: "Angled well TVD at TD", v: `${fmt(c.tvd)} ${u} bgs` });
+      items.push({ k: "Angled well horizontal reach", v: `${fmt(c.reach)} ${u}` });
+      items.push({ k: "Entry angle (equivalent)", v: `${fmt(c.fromHoriz, 1)}\u00B0 horiz  /  ${fmt(c.fromVert, 1)}\u00B0 vert` });
+
+      if (c.vscOn) {
+        items.push({
+          k: "Vertical screen interval",
+          v: `${fmt(c.vsTop)} to ${fmt(c.vsBot)} ${u} bgs`
+        });
+      }
+      if (c.ascOn) {
+        items.push({
+          k: "Angled screen (along hole)",
+          v: `${fmt(c.asTop)} to ${fmt(c.asBot)} ${u}`
+        });
+        items.push({
+          k: "Angled screen TVD range",
+          v: `${fmt(c.asTopTVD)} to ${fmt(c.asBotTVD)} ${u} bgs`
+        });
+        items.push({
+          k: "Angled screen reach range",
+          v: `${fmt(c.asTopReach)} to ${fmt(c.asBotReach)} ${u}`
+        });
+      }
+      if (c.tgtOn) {
+        if (c.targetMiss < 0.05) {
+          items.push({
+            k: "Target on trajectory at MD",
+            v: `${fmt(c.targetProj)} ${u}`,
+            highlight: true
+          });
+        } else {
+          items.push({
+            k: "Perp. distance to target",
+            v: `${fmt(c.targetMiss)} ${u}`,
+            sub: c.signedMiss > 0 ? "well above target" : "well below target"
+          });
+        }
+      }
+      if (c.dtw > 0 && !c.vertReachesWater) {
+        items.push({
+          k: "Vertical well too shallow",
+          v: `TD ${fmt(c.vdepth)} < DTW ${fmt(c.dtw)} ${u}`,
+          warn: true
+        });
+      }
+
+      let cy = y + 22;
+      const rowH = 21;
+      const pad = 5;
+
+      items.forEach((it) => {
+        if (cy + rowH > y + h - 2) return; // guard against overflow
+
+        // Row highlight background
+        if (it.highlight) {
+          doc.setFillColor(232, 242, 247);
+          doc.rect(x + 3, cy, w - 6, rowH - 2, "F");
+        } else if (it.warn) {
+          doc.setFillColor(253, 232, 220);
+          doc.rect(x + 3, cy, w - 6, rowH - 2, "F");
+        }
+
+        // Label (small caps look)
+        doc.setFontSize(6.2);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(it.warn ? 154 : 107, it.warn ? 52 : 74, it.warn ? 18 : 46);
+        doc.text(it.k.toUpperCase(), x + pad + 2, cy + 6);
+
+        // Value
+        doc.setFontSize(it.warn ? 8.5 : 9.5);
+        doc.setFont("helvetica", "bold");
+        if (it.highlight) doc.setTextColor(42, 111, 151);
+        else if (it.warn) doc.setTextColor(154, 52, 18);
+        else doc.setTextColor(28, 25, 20);
+        doc.text(it.v, x + pad + 2, cy + 15);
+
+        // Optional sub-label (right side, italic)
+        if (it.sub) {
+          doc.setFontSize(5.8);
+          doc.setFont("helvetica", "italic");
+          doc.setTextColor(90, 84, 76);
+          doc.text(it.sub, x + w - pad - 2, cy + 15, { align: "right" });
+          doc.setFont("helvetica", "normal");
+        }
+
+        cy += rowH;
+      });
+    }
+
+    function drawPDFLegend(doc, x, y, w, c) {
+      const items = [
+        { label: "ground surface", color: [107, 74, 46], type: "thick" },
+        { label: "water table", color: [42, 111, 151], type: "line" },
+        { label: "vertical well", color: [47, 79, 62], type: "line" },
+        { label: "angled well", color: [180, 83, 9], type: "line" }
+      ];
+      if (c.vscOn || c.ascOn) items.push({ label: "well screen", color: [82, 121, 111], type: "hatched" });
+      if (c.dtw > 0 && c.angledReachesWater) items.push({ label: "WT offset", color: [29, 78, 137], type: "line" });
+      if (c.tgtOn) items.push({ label: "target point", color: [154, 52, 18], type: "dot" });
+
+      const spacing = w / items.length;
+      items.forEach((it, i) => {
+        const cx = x + i * spacing;
+        doc.setDrawColor(it.color[0], it.color[1], it.color[2]);
+        doc.setFillColor(it.color[0], it.color[1], it.color[2]);
+        if (it.type === "thick") {
+          doc.setLineWidth(2.5);
+          doc.line(cx, y, cx + 14, y);
+        } else if (it.type === "line") {
+          doc.setLineWidth(1.5);
+          doc.line(cx, y, cx + 14, y);
+        } else if (it.type === "dashed") {
+          doc.setLineDashPattern([2, 2], 0);
+          doc.setLineWidth(1);
+          doc.line(cx, y, cx + 14, y);
+          doc.setLineDashPattern([], 0);
+        } else if (it.type === "hatched") {
+          doc.setLineWidth(0.4);
+          doc.rect(cx, y - 2.5, 14, 5, "S");
+          for (let hx = cx + 1.5; hx < cx + 14; hx += 2.2) {
+            doc.line(hx, y - 2.5, hx, y + 2.5);
+          }
+        } else if (it.type === "dot") {
+          doc.circle(cx + 7, y, 2.5, "F");
+        }
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(60, 52, 40);
+        doc.text(it.label, cx + 18, y + 2.5);
+      });
+    }
+
+    // Init
+    buildPresets();
+    updateUnitLabels();
+    window.addEventListener("resize", render);
+    render();
+  </script>
+</body>
+</html>
